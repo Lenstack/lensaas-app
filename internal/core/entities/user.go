@@ -2,6 +2,8 @@ package entities
 
 import "time"
 
+const UserTableName = "users"
+
 type User struct {
 	Id            string
 	Name          string
