@@ -3,11 +3,13 @@ package repositories
 import (
 	"github.com/Lenstack/lensaas-app/internal/core/entities"
 	"github.com/Masterminds/squirrel"
+	"time"
 )
 
 type IUserRepository interface {
 	Create(user entities.User) (userId string, err error)
 	FindByEmail(email string) (user entities.User, err error)
+	UpdateVerificationCode(email string, code string, sendExpiresAt time.Time) (message string, err error)
 }
 
 type UserRepository struct {
@@ -38,4 +40,18 @@ func (ur *UserRepository) FindByEmail(email string) (user entities.User, err err
 		return entities.User{}, err
 	}
 	return user, nil
+}
+
+// UpdateVerificationCode TODO: 1. Update verification code, 2. Return success message
+
+func (ur *UserRepository) UpdateVerificationCode(email string, code string, sendExpiresAt time.Time) (message string, err error) {
+	qb := ur.Database.Update(entities.UserTableName).
+		Set("Code", code).
+		Set("SendExpiresAt", sendExpiresAt).
+		Where(squirrel.Eq{"Email": email})
+	_, err = qb.Exec()
+	if err != nil {
+		return "", err
+	}
+	return "verification code updated", nil
 }
