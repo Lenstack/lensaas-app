@@ -4,15 +4,19 @@ import (
 	"errors"
 	"github.com/Lenstack/lensaas-app/internal/core/entities"
 	"github.com/Lenstack/lensaas-app/internal/core/repositories"
+	"github.com/Lenstack/lensaas-app/internal/templates"
 	"github.com/Lenstack/lensaas-app/internal/utils"
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
+	"strings"
+	"time"
 )
 
 type IUserService interface {
 	SignIn(email string, password string) (token string, err error)
 	SignUp(user entities.User) (message string, err error)
 	SignOut(userId string) (message string, err error)
+	SendVerificationEmail(email string) (message string, err error)
 }
 
 type UserService struct {
@@ -61,8 +65,7 @@ func (us *UserService) SignUp(user entities.User) (message string, err error) {
 		return "", err
 	}
 
-	err = us.Email.Send("internal/templates/email_template.html", []string{newUser.Email}, "Confirmation Email",
-		[]string{newUser.Name, newUser.Code}, []string{})
+	_, err = us.SendVerificationEmail(user.Name, user.Email)
 	if err != nil {
 		return "", err
 	}
@@ -73,4 +76,21 @@ func (us *UserService) SignUp(user entities.User) (message string, err error) {
 // SignOut TODO: 1. Check if user exists, 2. If user exists, delete token, 3. Return success message
 func (us *UserService) SignOut(userId string) (string, error) {
 	return "", nil
+}
+
+// SendVerificationEmail TODO: 1. Check if user exists, 2. If user exists, send email to user, 3. Return success message
+func (us *UserService) SendVerificationEmail(name, email string) (message string, err error) {
+	code := utils.NewCode()
+	sendExpiresAt := time.Now().Add(time.Minute * 5)
+	message, err = us.UserRepository.UpdateVerificationCode(email, code, sendExpiresAt)
+	if err != nil {
+		return "", err
+	}
+
+	err = us.Email.Send("internal/templates/verification_template.html", []string{email},
+		"Verification Code", templates.Verification{Name: strings.ToTitle(name), Code: code}, []string{})
+	if err != nil {
+		return "", err
+	}
+	return message, nil
 }
