@@ -19,7 +19,7 @@ func NewEmail(host string, port string, email string, password string) *Email {
 	return &Email{Host: host, Port: portInt, Email: email, Password: password}
 }
 
-func (e *Email) Send(templateUrl string, to []string, subject string, body []string, attachments []string) error {
+func (e *Email) Send(templateUrl string, to []string, subject string, body interface{}, attachments []string) error {
 	mail := gomail.NewMessage()
 	mail.SetHeader("From", e.Email)
 	mail.SetHeader("To", to...)
@@ -39,7 +39,7 @@ func (e *Email) Send(templateUrl string, to []string, subject string, body []str
 		}
 		mail.SetBody("text/html", tpl.String())
 	} else {
-		mail.SetBody("text/plain", body[0])
+		mail.SetBody("text/plain", body.(string))
 	}
 
 	for _, attachment := range attachments {
