@@ -21,7 +21,7 @@ func main() {
 		DBName         = viper.Get("DB_NAME").(string)
 		MailHost       = viper.Get("MAIL_HOST").(string)
 		MailPort       = viper.Get("MAIL_PORT").(string)
-		MailUser       = viper.Get("MAIL_USER").(string)
+		MailEmail      = viper.Get("MAIL_EMAIL").(string)
 		MailPass       = viper.Get("MAIL_PASSWORD").(string)
 		JwtSecret      = viper.Get("JWT_SECRET").(string)
 		JwtExpiration  = viper.Get("JWT_EXPIRATION").(string)
@@ -29,12 +29,13 @@ func main() {
 
 	logger := infrastructure.NewLogger(AppEnvironment)
 	postgres := infrastructure.NewPostgres(DBHost, DBPort, DBUser, DBPassword, DBName, logger)
-	email := utils.NewEmail(MailHost, MailPort, MailUser, MailPass)
+	email := utils.NewEmail(MailHost, MailPort, MailEmail, MailPass)
 	jwt := utils.NewJwt(JwtSecret, JwtExpiration)
 
+	// Register all services
 	userService := services.NewUserService(postgres.Database, jwt, email)
 	microservice := applications.NewMicroservice(*userService)
 
 	routes := infrastructure.NewRoutes(*microservice)
-	infrastructure.NewHttpServer("localhost", AppPort, routes.Handlers, logger)
+	infrastructure.NewHttpServer(AppPort, routes.Handlers, logger)
 }
