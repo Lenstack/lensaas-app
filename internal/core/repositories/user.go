@@ -1,13 +1,13 @@
 package repositories
 
 import (
-	"github.com/Lenstack/lensaas-app/internal/core/models"
+	"github.com/Lenstack/lensaas-app/internal/core/entities"
 	"github.com/Masterminds/squirrel"
 )
 
 type IUserRepository interface {
-	Create(user models.User) (userId string, err error)
-	FindByEmail(email string) (user models.User, err error)
+	Create(user entities.User) (userId string, err error)
+	FindByEmail(email string) (user entities.User, err error)
 }
 
 type UserRepository struct {
@@ -15,8 +15,8 @@ type UserRepository struct {
 }
 
 // Create TODO: 1. Create user, 2. Return user id
-func (ur *UserRepository) Create(user models.User) (userId string, err error) {
-	qb := ur.Database.Insert(models.UserTableName).
+func (ur *UserRepository) Create(user entities.User) (userId string, err error) {
+	qb := ur.Database.Insert(entities.UserTableName).
 		Columns("Id", "Name", "Email", "Password", "Verified", "Code", "SendExpiresAt").
 		Values(user.Id, user.Name, user.Email, user.Password, user.Verified, user.Code, user.SendExpiresAt).
 		Suffix("RETURNING Id")
@@ -28,14 +28,14 @@ func (ur *UserRepository) Create(user models.User) (userId string, err error) {
 }
 
 // FindByEmail TODO: 1. Find user by email, 2. Return user
-func (ur *UserRepository) FindByEmail(email string) (user models.User, err error) {
+func (ur *UserRepository) FindByEmail(email string) (user entities.User, err error) {
 	err = ur.Database.Select("Id", "Name", "Email", "Password", "Verified", "Code", "SendExpiresAt", "CreatedAt", "UpdatedAt").
-		From(models.UserTableName).
+		From(entities.UserTableName).
 		Where(squirrel.Eq{"email": email}).
 		QueryRow().
 		Scan(&user.Id, &user.Name, &user.Email, &user.Password, &user.Verified, &user.Code, &user.SendExpiresAt, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
-		return models.User{}, err
+		return entities.User{}, err
 	}
 	return user, nil
 }
