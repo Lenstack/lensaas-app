@@ -6,12 +6,11 @@ import (
 )
 
 type HttpServer struct {
-	host string
 	port string
 }
 
-func NewHttpServer(host string, port string, handlers http.Handler, logger *Logger) *HttpServer {
-	listen, err := net.Listen("tcp", host+":"+port)
+func NewHttpServer(port string, handlers http.Handler, logger *Logger) *HttpServer {
+	listen, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		logger.Log.Sugar().Error(err)
 		return nil
@@ -23,5 +22,5 @@ func NewHttpServer(host string, port string, handlers http.Handler, logger *Logg
 		logger.Log.Sugar().Error(err)
 		return nil
 	}
-	return &HttpServer{host, port}
+	return &HttpServer{port}
 }

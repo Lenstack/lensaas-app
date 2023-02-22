@@ -1,24 +1,23 @@
 package infrastructure
 
-import "net/http"
+import (
+	"github.com/Lenstack/lensaas-app/internal/core/applications"
+	"net/http"
+)
 
 type Routes struct {
 	Handlers http.Handler
 }
 
-func NewRoutes() *Routes {
+func NewRoutes(microservice applications.Microservice) *Routes {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		_, err := w.Write([]byte("Hello World"))
-		if err != nil {
-			return
-		}
-	})
-	mux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
-		_, err := w.Write([]byte("pong"))
-		if err != nil {
-			return
-		}
-	})
+	microservice.MiddlewareCORS(mux)
+	microservice.MiddlewareLogger(mux)
+	microservice.MiddlewareRecovery(mux)
+	microservice.MiddlewareRateLimit(mux)
+
+	mux.HandleFunc("/sign-in", microservice.SignIn)
+	mux.HandleFunc("/sign-up", microservice.SignUp)
+	mux.HandleFunc("/sign-out", microservice.SignOut)
 	return &Routes{Handlers: mux}
 }
