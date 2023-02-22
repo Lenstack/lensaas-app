@@ -12,6 +12,16 @@ func (m *Microservice) AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// PermissionMiddleware TODO 1. Add a middleware to the microservice, 2. Add a middleware to the routes
+func (m *Microservice) PermissionMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Do stuff here
+
+		// If the user is not authorized, return a 401
+		next.ServeHTTP(w, r)
+	})
+}
+
 // MiddlewareLogger TODO 1. Add a middleware to the microservice, 2. Add a middleware to the routes
 func (m *Microservice) MiddlewareLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
