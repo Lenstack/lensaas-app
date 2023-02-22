@@ -32,6 +32,11 @@ func (m *Microservice) SignIn(wr http.ResponseWriter, req *http.Request) {
 
 	message, err := m.UserService.SignIn(body.Email, body.Password)
 	if err != nil {
+		wr.WriteHeader(http.StatusBadRequest)
+		err := json.NewEncoder(wr).Encode(err.Error())
+		if err != nil {
+			return
+		}
 		return
 	}
 

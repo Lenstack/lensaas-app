@@ -34,8 +34,8 @@ func (m *Microservice) SignUp(wr http.ResponseWriter, req *http.Request) {
 
 	message, err := m.UserService.SignUp(entities.User{Name: body.Name, Email: body.Email, Password: body.Password})
 	if err != nil {
-		wr.WriteHeader(http.StatusInternalServerError)
-		_, err := wr.Write([]byte(err.Error()))
+		wr.WriteHeader(http.StatusBadRequest)
+		err := json.NewEncoder(wr).Encode(err.Error())
 		if err != nil {
 			return
 		}
