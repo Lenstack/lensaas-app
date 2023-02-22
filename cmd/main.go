@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/Lenstack/lensaas-app/internal/core/applications"
+	"github.com/Lenstack/lensaas-app/internal/core/services"
 	"github.com/Lenstack/lensaas-app/internal/infrastructure"
 	"github.com/Lenstack/lensaas-app/internal/utils"
 	"github.com/spf13/viper"
@@ -12,6 +14,11 @@ func main() {
 	var (
 		AppEnvironment = viper.Get("APP_ENVIRONMENT").(string)
 		AppPort        = viper.Get("APP_PORT").(string)
+		DBHost         = viper.Get("DB_HOST").(string)
+		DBPort         = viper.Get("DB_PORT").(string)
+		DBUser         = viper.Get("DB_USER").(string)
+		DBPassword     = viper.Get("DB_PASSWORD").(string)
+		DBName         = viper.Get("DB_NAME").(string)
 		MailHost       = viper.Get("MAIL_HOST").(string)
 		MailPort       = viper.Get("MAIL_PORT").(string)
 		MailUser       = viper.Get("MAIL_USER").(string)
@@ -21,14 +28,13 @@ func main() {
 	)
 
 	logger := infrastructure.NewLogger(AppEnvironment)
-	utils.NewJwt(JwtSecret, JwtExpiration)
+	postgres := infrastructure.NewPostgres(DBHost, DBPort, DBUser, DBPassword, DBName, logger)
+	email := utils.NewEmail(MailHost, MailPort, MailUser, MailPass)
+	jwt := utils.NewJwt(JwtSecret, JwtExpiration)
 
-	email := infrastructure.NewEmail(MailHost, MailPort, MailUser, MailPass, logger)
-	err := email.Send("internal/templates/email_template.html", "asesinblood@gmail.com", []string{"asesinblood@gmail.com"}, "Test", []string{"Test", "Code"}, []string{})
-	if err != nil {
-		logger.Log.Sugar().Errorf("Failed to send email: %v", err)
-	}
+	userService := services.NewUserService(postgres.Database, jwt, email)
+	microservice := applications.NewMicroservice(*userService)
 
-	routes := infrastructure.NewRoutes()
+	routes := infrastructure.NewRoutes(*microservice)
 	infrastructure.NewHttpServer("localhost", AppPort, routes.Handlers, logger)
 }
