@@ -8,25 +8,20 @@ import (
 )
 
 type Email struct {
-	host string
-	port int
-	user string
-	pass string
+	Host     string
+	Port     int
+	Email    string
+	Password string
 }
 
-func NewEmail(host string, port string, user string, pass string) *Email {
+func NewEmail(host string, port string, email string, password string) *Email {
 	portInt, _ := strconv.Atoi(port)
-	return &Email{
-		host: host,
-		port: portInt,
-		user: user,
-		pass: pass,
-	}
+	return &Email{Host: host, Port: portInt, Email: email, Password: password}
 }
 
-func (e *Email) Send(templateUrl string, from string, to []string, subject string, body, attachments []string) error {
+func (e *Email) Send(templateUrl string, to []string, subject string, body []string, attachments []string) error {
 	mail := gomail.NewMessage()
-	mail.SetHeader("From", from)
+	mail.SetHeader("From", e.Email)
 	mail.SetHeader("To", to...)
 	mail.SetHeader("Subject", subject)
 
@@ -51,11 +46,12 @@ func (e *Email) Send(templateUrl string, from string, to []string, subject strin
 		mail.Attach(attachment)
 	}
 
-	dialer := gomail.NewDialer(e.host, e.port, e.user, e.pass)
+	dialer := gomail.NewDialer(e.Host, e.Port, e.Email, e.Password)
 
+	errChan := make(chan error)
 	go func() {
 		if err := dialer.DialAndSend(mail); err != nil {
-			return
+			errChan <- err
 		}
 	}()
 
