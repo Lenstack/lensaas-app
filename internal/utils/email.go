@@ -1,4 +1,4 @@
-package infrastructure
+package utils
 
 import (
 	"bytes"
@@ -8,21 +8,19 @@ import (
 )
 
 type Email struct {
-	host   string
-	port   int
-	user   string
-	pass   string
-	logger *Logger
+	host string
+	port int
+	user string
+	pass string
 }
 
-func NewEmail(host string, port string, user string, pass string, logger *Logger) *Email {
+func NewEmail(host string, port string, user string, pass string) *Email {
 	portInt, _ := strconv.Atoi(port)
 	return &Email{
-		host:   host,
-		port:   portInt,
-		user:   user,
-		pass:   pass,
-		logger: logger,
+		host: host,
+		port: portInt,
+		user: user,
+		pass: pass,
 	}
 }
 
@@ -37,13 +35,11 @@ func (e *Email) Send(templateUrl string, from string, to []string, subject strin
 
 		emailTemplate, err := template.ParseFiles(templateUrl)
 		if err != nil {
-			e.logger.Log.Sugar().Errorf("Failed to parse email template: %v", err)
 			return err
 		}
 
 		err = emailTemplate.Execute(&tpl, body)
 		if err != nil {
-			e.logger.Log.Sugar().Errorf("Failed to render email template: %v", err)
 			return err
 		}
 		mail.SetBody("text/html", tpl.String())
@@ -58,9 +54,7 @@ func (e *Email) Send(templateUrl string, from string, to []string, subject strin
 	dialer := gomail.NewDialer(e.host, e.port, e.user, e.pass)
 
 	go func() {
-		e.logger.Log.Sugar().Infof("Sending email to: %s", to)
 		if err := dialer.DialAndSend(mail); err != nil {
-			e.logger.Log.Sugar().Errorf("Error sending email: %s", err.Error())
 			return
 		}
 	}()
