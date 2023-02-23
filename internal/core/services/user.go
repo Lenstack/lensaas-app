@@ -14,7 +14,7 @@ import (
 )
 
 type IUserService interface {
-	SignIn(email string, password string) (token string, err error)
+	SignIn(email string, password string) (token string, refreshToken string, err error)
 	SignUp(user entities.User) (message string, err error)
 	SignOut(token string) (message string, err error)
 	SendVerificationEmail(name, email string) (message string, err error)
@@ -37,32 +37,31 @@ func NewUserService(database squirrel.StatementBuilderType, emailService EmailSe
 }
 
 // SignIn TODO: 1. Check if user exists, 2. If user exists, check if password is correct, 3. If password is correct, generate token, 4. Return token
-func (us *UserService) SignIn(email string, password string) (token string, err error) {
+func (us *UserService) SignIn(email string, password string) (token string, refreshToken string, err error) {
 	user, err := us.UserRepository.FindByEmail(email)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	if !user.Verified {
-		return "", errors.New("user is not verified")
+		return "", "", errors.New("user is not verified")
 	}
 
 	err = us.bcrypt.ComparePassword(user.Password, password)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	token, err = us.TokenService.GenerateToken(user.Id, us.TokenService.ExpirationTime)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	refreshToken, err := us.TokenService.NewRefreshToken()
+	refreshToken, err = us.TokenService.NewRefreshToken()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	fmt.Printf("refreshToken: %s", refreshToken)
-	return token, nil
+	return token, refreshToken, nil
 }
 
 // SignUp TODO: 1. Check if user already exists, 2. If user does not exist, create user, 3. Send email to user, 4. Return success message

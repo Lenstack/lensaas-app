@@ -6,6 +6,6 @@ type SignInRequest struct {
 }
 
 type SignInResponse struct {
-	Message string `json:"message"`
-	Token   string `json:"token"`
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
 }

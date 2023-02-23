@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: docker-app
+    build: .
+    ports:
+      - '${APP_PORT}:${APP_PORT}'
+    networks:
+      - app-network
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+
+  postgres:
+    container_name: docker-postgres
+    image: postgres:latest
+    restart: always
+    ports:
+      - '${DB_PORT}:${DB_PORT}'
+    networks:
+      - app-network
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    container_name: docker-redis
+    image: redis/redis-stack:latest
+    restart: always
+    ports:
+      - '${REDIS_PORT}:${REDIS_PORT}'
+    networks:
+      - app-network
+    volumes:
+      - redis-data:/data
+
+volumes:
+  postgres-data:
+  redis-data:
+networks:
+  app-network:

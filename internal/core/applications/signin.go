@@ -31,7 +31,7 @@ func (m *Microservice) SignIn(wr http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	token, err := m.UserService.SignIn(body.Email, body.Password)
+	accessToken, refreshToken, err := m.UserService.SignIn(body.Email, body.Password)
 	if err != nil {
 		wr.WriteHeader(http.StatusBadRequest)
 		err := json.NewEncoder(wr).Encode(&models.Error{Message: err.Error(), Code: http.StatusBadRequest})
@@ -42,7 +42,7 @@ func (m *Microservice) SignIn(wr http.ResponseWriter, req *http.Request) {
 	}
 
 	wr.WriteHeader(http.StatusOK)
-	err = json.NewEncoder(wr).Encode(&models.SignInResponse{Token: token, Message: "Successfully signed in"})
+	err = json.NewEncoder(wr).Encode(&models.SignInResponse{AccessToken: accessToken, RefreshToken: refreshToken})
 	if err != nil {
 		return
 	}

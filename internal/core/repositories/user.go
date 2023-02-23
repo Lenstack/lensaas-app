@@ -19,8 +19,8 @@ type UserRepository struct {
 // Create TODO: 1. Create user, 2. Return user id
 func (ur *UserRepository) Create(user entities.User) (userId string, err error) {
 	qb := ur.Database.Insert(entities.UserTableName).
-		Columns("Id", "Name", "Email", "Password", "Verified", "Code", "SendExpiresAt").
-		Values(user.Id, user.Name, user.Email, user.Password, user.Verified, user.Code, user.SendExpiresAt).
+		Columns("Id", "Name", "Email", "Password", "Verified", "Code", "Token", "SendExpiresAt").
+		Values(user.Id, user.Name, user.Email, user.Password, user.Verified, user.Code, user.Token, user.SendExpiresAt).
 		Suffix("RETURNING Id")
 	err = qb.QueryRow().Scan(&userId)
 	if err != nil {
@@ -32,12 +32,12 @@ func (ur *UserRepository) Create(user entities.User) (userId string, err error) 
 // FindByEmail TODO: 1. Find user by email, 2. Return user
 func (ur *UserRepository) FindByEmail(email string) (user entities.User, err error) {
 	err = ur.Database.Select("Id", "Name", "Email", "Password",
-		"Verified", "Code", "SendExpiresAt", "CreatedAt", "UpdatedAt").
+		"Verified", "Code", "Token", "SendExpiresAt", "CreatedAt", "UpdatedAt").
 		From(entities.UserTableName).
 		Where(squirrel.Eq{"email": email}).
 		QueryRow().
 		Scan(&user.Id, &user.Name, &user.Email, &user.Password,
-			&user.Verified, &user.Code, &user.SendExpiresAt,
+			&user.Verified, &user.Code, &user.Token, &user.SendExpiresAt,
 			&user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		return entities.User{}, err
