@@ -3,6 +3,7 @@ package repositories
 import (
 	"github.com/Lenstack/lensaas-app/internal/core/entities"
 	"github.com/Masterminds/squirrel"
+	"github.com/redis/go-redis/v9"
 	"time"
 )
 
@@ -17,6 +18,7 @@ type IUserRepository interface {
 
 type UserRepository struct {
 	Database squirrel.StatementBuilderType
+	Redis    *redis.Client
 }
 
 // Create TODO: 1. Create user, 2. Return user id

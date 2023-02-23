@@ -1,5 +1,5 @@
 ## Build
-FROM golang:1.20.1-alpine AS build
+FROM golang:1.20.1-alpine AS builder
 
 WORKDIR /app
 
@@ -7,19 +7,21 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
-COPY cmd/*.go ./
+COPY . ./
 
-RUN go build -o /docker-app
+RUN go build -o docker-app ./cmd/main.go
 
-## Deploy
+CMD ["./docker-app"]
+
+## Run
 FROM alpine:latest
 
-WORKDIR /
+WORKDIR /app
 
-COPY --from=build ./docker-app ./docker-app
+COPY .env .
 
-EXPOSE 8080
+COPY --from=builder /app/docker-app .
 
-ENTRYPOINT ["/docker-app"]
+CMD ["./docker-app"]
 
 ## docker build -t docker-app .

@@ -9,6 +9,7 @@ import (
 	"github.com/Lenstack/lensaas-app/internal/utils"
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"strings"
 	"time"
 )
@@ -31,10 +32,11 @@ type UserService struct {
 	bcrypt         *utils.Bcrypt
 }
 
-func NewUserService(database squirrel.StatementBuilderType, tokenService TokenService, emailService EmailService) *UserService {
+func NewUserService(database squirrel.StatementBuilderType, redis *redis.Client, tokenService TokenService, emailService EmailService) *UserService {
 	return &UserService{
 		UserRepository: repositories.UserRepository{
 			Database: database,
+			Redis:    redis,
 		},
 		TokenService: tokenService,
 		EmailService: emailService,

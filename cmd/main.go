@@ -18,6 +18,10 @@ func main() {
 		DBUser         = viper.Get("DB_USER").(string)
 		DBPassword     = viper.Get("DB_PASSWORD").(string)
 		DBName         = viper.Get("DB_NAME").(string)
+		RedisHost      = viper.Get("REDIS_HOST").(string)
+		RedisPort      = viper.Get("REDIS_PORT").(string)
+		RedisPassword  = viper.Get("REDIS_PASSWORD").(string)
+		RedisDB        = viper.Get("REDIS_DB").(string)
 		MailHost       = viper.Get("MAIL_HOST").(string)
 		MailPort       = viper.Get("MAIL_PORT").(string)
 		MailEmail      = viper.Get("MAIL_EMAIL").(string)
@@ -28,12 +32,13 @@ func main() {
 
 	logger := infrastructure.NewLogger(AppEnvironment)
 	postgres := infrastructure.NewPostgres(DBHost, DBPort, DBUser, DBPassword, DBName, logger.Log)
+	redis := infrastructure.NewRedis(RedisHost, RedisPort, RedisPassword, RedisDB, logger.Log)
 
 	// Register common services
 	emailService := services.NewEmailService(MailHost, MailPort, MailEmail, MailPass)
 	tokenService := services.NewTokenService(JwtSecret, JwtExpiration)
 	// Register all services
-	userService := services.NewUserService(postgres.Database, *tokenService, *emailService)
+	userService := services.NewUserService(postgres.Database, redis.Client, *tokenService, *emailService)
 	// Register all applications
 	microservice := applications.NewMicroservice(*emailService, *tokenService, *userService)
 
