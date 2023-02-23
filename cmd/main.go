@@ -4,7 +4,6 @@ import (
 	"github.com/Lenstack/lensaas-app/internal/core/applications"
 	"github.com/Lenstack/lensaas-app/internal/core/services"
 	"github.com/Lenstack/lensaas-app/internal/infrastructure"
-	"github.com/Lenstack/lensaas-app/internal/utils"
 	"github.com/spf13/viper"
 )
 
@@ -28,14 +27,16 @@ func main() {
 	)
 
 	logger := infrastructure.NewLogger(AppEnvironment)
-	postgres := infrastructure.NewPostgres(DBHost, DBPort, DBUser, DBPassword, DBName, logger)
-	email := utils.NewEmail(MailHost, MailPort, MailEmail, MailPass)
-	jwt := utils.NewJwt(JwtSecret, JwtExpiration)
+	postgres := infrastructure.NewPostgres(DBHost, DBPort, DBUser, DBPassword, DBName, logger.Log)
 
+	// Register common services
+	emailService := services.NewEmailService(MailHost, MailPort, MailEmail, MailPass)
+	tokenService := services.NewTokenService(JwtSecret, JwtExpiration)
 	// Register all services
-	userService := services.NewUserService(postgres.Database, jwt, email)
-	microservice := applications.NewMicroservice(*userService)
+	userService := services.NewUserService(postgres.Database, *emailService)
+	// Register all applications
+	microservice := applications.NewMicroservice(*emailService, *tokenService, *userService)
 
 	routes := infrastructure.NewRoutes(*microservice)
-	infrastructure.NewHttpServer(AppPort, routes.Handlers, logger)
+	infrastructure.NewHttpServer(AppPort, routes.Handlers, logger.Log)
 }

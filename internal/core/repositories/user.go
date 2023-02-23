@@ -31,27 +31,31 @@ func (ur *UserRepository) Create(user entities.User) (userId string, err error) 
 
 // FindByEmail TODO: 1. Find user by email, 2. Return user
 func (ur *UserRepository) FindByEmail(email string) (user entities.User, err error) {
-	err = ur.Database.Select("Id", "Name", "Email", "Password", "Verified", "Code", "SendExpiresAt", "CreatedAt", "UpdatedAt").
+	err = ur.Database.Select("Id", "Name", "Email", "Password",
+		"Verified", "Code", "SendExpiresAt", "CreatedAt", "UpdatedAt").
 		From(entities.UserTableName).
 		Where(squirrel.Eq{"email": email}).
 		QueryRow().
-		Scan(&user.Id, &user.Name, &user.Email, &user.Password, &user.Verified, &user.Code, &user.SendExpiresAt, &user.CreatedAt, &user.UpdatedAt)
+		Scan(&user.Id, &user.Name, &user.Email, &user.Password,
+			&user.Verified, &user.Code, &user.SendExpiresAt,
+			&user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		return entities.User{}, err
 	}
 	return user, nil
 }
 
-// UpdateVerificationCode TODO: 1. Update verification code, 2. Return success message
-
+// UpdateVerificationCode TODO: 1. Update verification code,SendExpiresAt by email 2. Return success message
 func (ur *UserRepository) UpdateVerificationCode(email string, code string, sendExpiresAt time.Time) (message string, err error) {
 	qb := ur.Database.Update(entities.UserTableName).
 		Set("Code", code).
 		Set("SendExpiresAt", sendExpiresAt).
-		Where(squirrel.Eq{"Email": email})
-	_, err = qb.Exec()
+		Where(squirrel.Eq{"Email": email}).
+		Suffix("RETURNING Id")
+
+	err = qb.QueryRow().Scan(&message)
 	if err != nil {
 		return "", err
 	}
-	return "verification code updated", nil
+	return message, nil
 }

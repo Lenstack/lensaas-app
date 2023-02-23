@@ -9,10 +9,12 @@ import (
 
 // SignIn TODO: 1. Get email and password from request, 2. Validate request, 3. Call SignIn method from UserService, 4. Return token
 func (m *Microservice) SignIn(wr http.ResponseWriter, req *http.Request) {
+	wr.Header().Set("Content-Type", "application/json")
 	body := &models.SignInRequest{}
+
 	if err := json.NewDecoder(req.Body).Decode(body); err != nil {
 		wr.WriteHeader(http.StatusBadRequest)
-		_, err := wr.Write([]byte(err.Error()))
+		err := json.NewEncoder(wr).Encode(&models.Error{Message: err.Error(), Code: http.StatusBadRequest})
 		if err != nil {
 			return
 		}
@@ -21,7 +23,6 @@ func (m *Microservice) SignIn(wr http.ResponseWriter, req *http.Request) {
 
 	validateErrors := utils.Validate(body)
 	if len(validateErrors) > 0 {
-		wr.Header().Set("Content-Type", "application/json")
 		wr.WriteHeader(http.StatusBadRequest)
 		err := json.NewEncoder(wr).Encode(validateErrors)
 		if err != nil {
@@ -30,19 +31,18 @@ func (m *Microservice) SignIn(wr http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	message, err := m.UserService.SignIn(body.Email, body.Password)
+	token, err := m.UserService.SignIn(body.Email, body.Password)
 	if err != nil {
 		wr.WriteHeader(http.StatusBadRequest)
-		err := json.NewEncoder(wr).Encode(err.Error())
+		err := json.NewEncoder(wr).Encode(&models.Error{Message: err.Error(), Code: http.StatusBadRequest})
 		if err != nil {
 			return
 		}
 		return
 	}
 
-	wr.Header().Set("Content-Type", "application/json")
 	wr.WriteHeader(http.StatusOK)
-	err = json.NewEncoder(wr).Encode(message)
+	err = json.NewEncoder(wr).Encode(&models.SignInResponse{Token: token, Message: "Successfully signed in"})
 	if err != nil {
 		return
 	}

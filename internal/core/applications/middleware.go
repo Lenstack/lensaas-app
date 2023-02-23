@@ -1,22 +1,63 @@
 package applications
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/Lenstack/lensaas-app/internal/core/models"
 	"net/http"
+	"strings"
 )
 
-// AuthMiddleware TODO 1. Add a middleware to the microservice, 2. Add a middleware to the routes
-func (m *Microservice) AuthMiddleware(next http.Handler) http.Handler {
+// MiddlewareAuth TODO 1. Add a middleware to the microservice, 2. Add a middleware to the routes
+func (m *Microservice) MiddlewareAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Do stuff here
+		w.Header().Set("Content-Type", "application/json")
+		token := r.Header.Get("Authorization")
+		if token == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			err := json.NewEncoder(w).Encode(&models.Error{Message: "Unauthorized", Code: http.StatusUnauthorized})
+			if err != nil {
+				return
+			}
+			return
+		}
+
+		parts := strings.Fields(token)
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			w.WriteHeader(http.StatusUnauthorized)
+			err := json.NewEncoder(w).Encode(&models.Error{Message: "Unauthorized", Code: http.StatusUnauthorized})
+			if err != nil {
+				return
+			}
+			return
+		}
+
+		clearedToken := parts[1]
+
+		userId, err := m.TokenService.ValidateToken(clearedToken)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			err := json.NewEncoder(w).Encode(&models.Error{Message: "Unauthorized", Code: http.StatusUnauthorized})
+			if err != nil {
+				return
+			}
+			return
+		}
+
+		// Set the userId in the request context
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, "userId", userId)
+		r = r.WithContext(ctx)
+
 		next.ServeHTTP(w, r)
 	})
 }
 
-// PermissionMiddleware TODO 1. Add a middleware to the microservice, 2. Add a middleware to the routes
-func (m *Microservice) PermissionMiddleware(next http.Handler) http.Handler {
+// MiddlewarePermission TODO 1. Add a middleware to the microservice, 2. Add a middleware to the routes
+func (m *Microservice) MiddlewarePermission(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Do stuff here
-
 		// If the user is not authorized, return a 401
 		next.ServeHTTP(w, r)
 	})
@@ -26,6 +67,7 @@ func (m *Microservice) PermissionMiddleware(next http.Handler) http.Handler {
 func (m *Microservice) MiddlewareLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Do stuff here
+		fmt.Println("Request: ", r.Method, r.URL.Path)
 		next.ServeHTTP(w, r)
 	})
 }
