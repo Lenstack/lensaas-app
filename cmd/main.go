@@ -33,7 +33,7 @@ func main() {
 	emailService := services.NewEmailService(MailHost, MailPort, MailEmail, MailPass)
 	tokenService := services.NewTokenService(JwtSecret, JwtExpiration)
 	// Register all services
-	userService := services.NewUserService(postgres.Database, *emailService)
+	userService := services.NewUserService(postgres.Database, *tokenService, *emailService)
 	// Register all applications
 	microservice := applications.NewMicroservice(*emailService, *tokenService, *userService)
 

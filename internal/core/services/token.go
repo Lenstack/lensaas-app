@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/base64"
 	"github.com/golang-jwt/jwt/v4"
 	"math/rand"
 	"time"
@@ -49,13 +50,10 @@ func (ts *TokenService) ValidateToken(token string) (string, error) {
 }
 
 func (ts *TokenService) NewRefreshToken() (string, error) {
-	b := make([]byte, 32)
-	s := rand.NewSource(time.Now().UnixNano())
-	r := rand.New(s)
-
-	_, err := r.Read(b)
+	token := make([]byte, 64)
+	_, err := rand.Read(token)
 	if err != nil {
 		return "", err
 	}
-	return string(b), nil
+	return base64.RawURLEncoding.EncodeToString(token), nil
 }

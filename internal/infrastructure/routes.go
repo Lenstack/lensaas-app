@@ -31,6 +31,9 @@ func NewRoutes(microservice applications.Microservice) *Routes {
 		router.Post("/v1/authentication/sign_up", microservice.SignUp)   //TODO: implemented ok
 		router.Post("/v1/authentication/sign_in", microservice.SignIn)   //TODO: implemented ok
 		router.Post("/v1/authentication/sign_out", microservice.SignOut) //TODO: in progress
+
+		router.Post("/v1/authentication/verification_email", microservice.VerificationEmail) //TODO: implemented ok
+		router.Post("/v1/authentication/verification_code", microservice.VerificationCode)   //TODO: in progress
 	})
 
 	return &Routes{Handlers: router}
