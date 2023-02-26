@@ -1,8 +1,10 @@
 package repositories
 
 import (
+	"context"
 	"github.com/Lenstack/lensaas-app/internal/core/entities"
 	"github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"time"
 )
@@ -11,9 +13,12 @@ type IUserRepository interface {
 	Create(user entities.User) (userId string, err error)
 	FindById(userId string) (user entities.User, err error)
 	FindByEmail(email string) (user entities.User, err error)
+	FindByRefreshToken(refreshToken string) (user entities.User, err error)
 	UpdateVerified(email string, verified bool) (message string, err error)
 	UpdateVerificationCode(email string, code string, sendExpiresAt time.Time) (message string, err error)
 	UpdateRefreshToken(userId string, refreshToken string) (message string, err error)
+
+	SaveAccessToken(userId string, accessToken string, expiresIn time.Duration) (message string, err error)
 }
 
 type UserRepository struct {
@@ -66,6 +71,22 @@ func (ur *UserRepository) FindByEmail(email string) (user entities.User, err err
 	return user, nil
 }
 
+// FindByRefreshToken TODO: 1. Find user by refresh token, 2. Return user
+func (ur *UserRepository) FindByRefreshToken(refreshToken string) (user entities.User, err error) {
+	err = ur.Database.Select("Id", "Name", "Email", "Password",
+		"Verified", "Code", "Token", "SendExpiresAt", "CreatedAt", "UpdatedAt").
+		From(entities.UserTableName).
+		Where(squirrel.Eq{"token": refreshToken}).
+		QueryRow().
+		Scan(&user.Id, &user.Name, &user.Email, &user.Password,
+			&user.Verified, &user.Code, &user.Token, &user.SendExpiresAt,
+			&user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		return entities.User{}, err
+	}
+	return user, nil
+}
+
 // UpdateVerified TODO: 1. Update verified, 2. Return success message
 func (ur *UserRepository) UpdateVerified(email string, verified bool) (message string, err error) {
 	qb := ur.Database.Update(entities.UserTableName).
@@ -107,4 +128,18 @@ func (ur *UserRepository) UpdateRefreshToken(userId string, refreshToken string)
 		return "", err
 	}
 	return message, nil
+}
+
+// SaveAccessToken TODO: 1. Save access token to redis, 2. Return success message
+func (ur *UserRepository) SaveAccessToken(userId string, accessToken string, expiresIn time.Duration) (message string, err error) {
+	tokenId := uuid.New().String()
+	err = ur.Redis.HSet(context.Background(), userId, userId+":"+tokenId, accessToken).Err()
+	if err != nil {
+		return "", err
+	}
+	err = ur.Redis.Expire(context.Background(), userId, expiresIn).Err()
+	if err != nil {
+		return "", err
+	}
+	return "success", nil
 }

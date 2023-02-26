@@ -21,7 +21,7 @@ type IUserService interface {
 	SendVerificationCode(name, email string) (message string, err error)
 	SendVerificationEmail(name, email string) (message string, err error)
 	VerifyEmail(token string) (message string, err error)
-	VerifyCode(code string) (message string, err error)
+	VerifyCode(email string, code string) (message string, err error)
 	RefreshToken(refreshToken string) (token string, err error)
 }
 
@@ -189,15 +189,36 @@ func (us *UserService) VerifyEmail(token string) (message string, err error) {
 		return "", errors.New("user is already verified")
 	}
 
-	verified, err := us.UserRepository.UpdateVerified(user.Email, true)
+	_, err = us.UserRepository.UpdateVerified(user.Email, true)
 	if err != nil {
 		return "", err
 	}
 
-	return verified, nil
+	return "your email has been verified successfully", nil
 }
 
 // VerifyCode TODO: 1. Get code from request, 2. Validate code, 3. Call EmailVerification method from UserService, 4. Return success message
-func (us *UserService) VerifyCode(code string) (message string, err error) {
+func (us *UserService) VerifyCode(email string, code string) (message string, err error) {
 	return "", errors.New("not implemented")
+}
+
+// RefreshToken TODO: 1. Get refresh token from request, 2. Validate refresh token, 3. Generate new token, 4. Return new token
+func (us *UserService) RefreshToken(refreshToken string) (token string, expiresIn int64, err error) {
+	user, err := us.UserRepository.FindByRefreshToken(refreshToken)
+	if err != nil {
+		return "", 0, errors.New("invalid refresh token")
+	}
+
+	token, err = us.TokenService.GenerateToken(user.Id, us.TokenService.ExpirationTime)
+	if err != nil {
+		return "", 0, err
+	}
+
+	message, err := us.UserRepository.SaveAccessToken(user.Id, token, us.TokenService.ExpirationTime)
+	if err != nil {
+		return "", 0, err
+	}
+	fmt.Println(message)
+
+	return token, time.Now().Add(us.TokenService.ExpirationTime).Unix(), nil
 }
