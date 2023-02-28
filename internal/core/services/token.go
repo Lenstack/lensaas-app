@@ -14,16 +14,21 @@ type ITokenService interface {
 }
 
 type TokenService struct {
-	secret         string
-	ExpirationTime time.Duration
+	secret                string
+	ExpirationTimeAccess  time.Duration
+	ExpirationTimeRefresh time.Duration
 }
 
-func NewTokenService(secret string, expiration string) *TokenService {
-	expirationTime, err := time.ParseDuration(expiration)
+func NewTokenService(secret string, expirationAccess string, expirationRefresh string) *TokenService {
+	expirationTimeAccess, err := time.ParseDuration(expirationAccess)
 	if err != nil {
 		panic(err)
 	}
-	return &TokenService{secret, expirationTime}
+	expirationTimeRefresh, err := time.ParseDuration(expirationRefresh)
+	if err != nil {
+		panic(err)
+	}
+	return &TokenService{secret, expirationTimeAccess, expirationTimeRefresh}
 }
 
 func (ts *TokenService) GenerateToken(userId string, expiration time.Duration) (string, error) {
