@@ -15,14 +15,14 @@ import (
 )
 
 type IUserService interface {
-	SignIn(email string, password string) (accessToken string, refreshToken string, err error)
+	SignIn(email string, password string) (accessToken string, refreshToken string, expiresIn int64, err error)
 	SignUp(user entities.User) (message string, err error)
 	SignOut(token string) (message string, err error)
 	SendVerificationCode(name, email string) (message string, err error)
 	SendVerificationEmail(name, email string) (message string, err error)
 	VerifyEmail(token string) (message string, err error)
 	VerifyCode(email string, code string) (message string, err error)
-	RefreshToken(refreshToken string) (token string, err error)
+	RefreshToken(refreshToken string) (token string, expiresIn int64, err error)
 }
 
 type UserService struct {
@@ -110,7 +110,7 @@ func (us *UserService) SignUp(user entities.User) (message string, err error) {
 }
 
 // SignOut TODO: 1. Check if user exists, 2. If user exists, delete token, 3. Return success message
-func (us *UserService) SignOut(token string) (string, error) {
+func (us *UserService) SignOut(token string) (message string, err error) {
 	userId, err := us.TokenService.ValidateToken(token)
 	if err != nil {
 		return "", err
