@@ -177,7 +177,7 @@ func (us *UserService) SendVerificationEmail(name, email string) (message string
 func (us *UserService) VerifyEmail(token string) (message string, err error) {
 	userId, err := us.TokenService.ValidateToken(token)
 	if err != nil {
-		return "", err
+		return "", errors.New("invalid token")
 	}
 
 	user, err := us.UserRepository.FindById(userId)
