@@ -21,11 +21,11 @@ func NewRoutes(microservice applications.Microservice) *Routes {
 	// Protected Routes
 	router.Group(func(router chi.Router) {
 		router.Use(microservice.MiddlewareAuth)
-		router.Get("/v1/users", microservice.GetUsers)
-		router.Get("/v1/users/{id}", microservice.GetUser)
-		router.Post("/v1/users", microservice.CreateUser)
-		router.Put("/v1/users/{id}", microservice.UpdateUser)
-		router.Delete("/v1/users/{id}", microservice.DeleteUser)
+		router.Get("/v1/users", microservice.GetUsers)           //TODO: not implemented
+		router.Get("/v1/users/{id}", microservice.GetUser)       //TODO: not implemented
+		router.Post("/v1/users", microservice.CreateUser)        //TODO: not implemented
+		router.Put("/v1/users/{id}", microservice.UpdateUser)    //TODO: not implemented
+		router.Delete("/v1/users/{id}", microservice.DeleteUser) //TODO: not implemented
 	})
 
 	router.Group(func(router chi.Router) {
