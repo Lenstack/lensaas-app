@@ -15,14 +15,14 @@ import (
 )
 
 type IUserService interface {
-	SignIn(email string, password string) (accessToken string, refreshToken string, expiresIn int64, err error)
+	SignIn(email string, password string) (accessToken string, refreshToken string, expiresIn time.Duration, err error)
 	SignUp(user entities.User) (message string, err error)
 	SignOut(token string) (message string, err error)
 	SendVerificationCode(name, email string) (message string, err error)
 	SendVerificationEmail(name, email string) (message string, err error)
 	VerifyEmail(token string) (message string, err error)
-	VerifyCode(email string, code string) (message string, err error)
-	RefreshToken(refreshToken string) (token string, expiresIn int64, err error)
+	VerifyCode(token string, code string) (message string, err error)
+	RefreshToken(refreshToken string) (token string, expiresIn time.Duration, err error)
 }
 
 type UserService struct {
@@ -44,7 +44,7 @@ func NewUserService(database squirrel.StatementBuilderType, redis *redis.Client,
 }
 
 // SignIn TODO: 1. Check if user exists, 2. If user exists, check if password is correct, 3. If password is correct, generate token, 4. Return token
-func (us *UserService) SignIn(email string, password string) (accessToken string, refreshToken string, expiresIn int64, err error) {
+func (us *UserService) SignIn(email string, password string) (accessToken string, refreshToken string, expiresIn time.Duration, err error) {
 	user, err := us.UserRepository.FindByEmail(email)
 	if err != nil {
 		return "", "", 0, err
@@ -74,7 +74,7 @@ func (us *UserService) SignIn(email string, password string) (accessToken string
 		return "", "", 0, err
 	}
 
-	return accessToken, refreshToken, time.Now().Add(us.TokenService.ExpirationTimeAccess).Unix(), nil
+	return accessToken, refreshToken, us.TokenService.ExpirationTimeAccess, nil
 }
 
 // SignUp TODO: 1. Check if user already exists, 2. If user does not exist, create user, 3. Send email to user, 4. Return success message
@@ -198,12 +198,31 @@ func (us *UserService) VerifyEmail(token string) (message string, err error) {
 }
 
 // VerifyCode TODO: 1. Get code from request, 2. Validate code, 3. Call EmailVerification method from UserService, 4. Return success message
-func (us *UserService) VerifyCode(email string, code string) (message string, err error) {
-	return "", errors.New("not implemented")
+func (us *UserService) VerifyCode(token string, code string) (message string, err error) {
+	userId, err := us.TokenService.ValidateToken(token)
+	if err != nil {
+		return "", errors.New("invalid token")
+	}
+
+	user, err := us.UserRepository.FindById(userId)
+	if err != nil {
+		return "", err
+	}
+
+	if user.Code != code {
+		return "", errors.New("invalid code")
+	}
+
+	if user.SendExpiresAt.Before(time.Now()) {
+		return "", errors.New("code has been expired")
+	}
+
+	// TODO: 1. Authorize user, 2. , 3. Return success message
+	return "your email has been verified successfully", nil
 }
 
 // RefreshToken TODO: 1. Get refresh token from request, 2. Validate refresh token, 3. Generate new token, 4. Return new token
-func (us *UserService) RefreshToken(refreshToken string) (token string, expiresIn int64, err error) {
+func (us *UserService) RefreshToken(refreshToken string) (token string, expiresIn time.Duration, err error) {
 	userId, err := us.TokenService.ValidateToken(refreshToken)
 	if err != nil {
 		return "", 0, errors.New("invalid refresh token")
@@ -234,5 +253,5 @@ func (us *UserService) RefreshToken(refreshToken string) (token string, expiresI
 		return "", 0, err
 	}
 
-	return token, time.Now().Add(us.TokenService.ExpirationTimeAccess).Unix(), nil
+	return token, us.TokenService.ExpirationTimeAccess, nil
 }

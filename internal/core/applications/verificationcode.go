@@ -10,6 +10,17 @@ import (
 // VerificationCode TODO 1. Get email, code from request, 2. Validate email, 3. Call EmailVerification method from UserService, 4. Return success message
 func (m *Microservice) VerificationCode(wr http.ResponseWriter, req *http.Request) {
 	wr.Header().Set("Content-Type", "application/json")
+
+	token := req.URL.Query().Get("token")
+	if token == "" {
+		wr.WriteHeader(http.StatusBadRequest)
+		err := json.NewEncoder(wr).Encode(&models.Error{Message: "token is required", Code: http.StatusBadRequest})
+		if err != nil {
+			return
+		}
+		return
+	}
+
 	body := &models.VerificationCodeRequest{}
 
 	if err := json.NewDecoder(req.Body).Decode(body); err != nil {
@@ -31,7 +42,7 @@ func (m *Microservice) VerificationCode(wr http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	message, err := m.UserService.VerifyCode(body.Email, body.Code)
+	message, err := m.UserService.VerifyCode(token, body.Code)
 	if err != nil {
 		wr.WriteHeader(http.StatusBadRequest)
 		err := json.NewEncoder(wr).Encode(&models.Error{Message: err.Error(), Code: http.StatusBadRequest})

@@ -5,6 +5,7 @@ import (
 	"github.com/Lenstack/lensaas-app/internal/core/models"
 	"github.com/Lenstack/lensaas-app/internal/utils"
 	"net/http"
+	"time"
 )
 
 func (m *Microservice) RefreshToken(wr http.ResponseWriter, req *http.Request) {
@@ -41,7 +42,7 @@ func (m *Microservice) RefreshToken(wr http.ResponseWriter, req *http.Request) {
 	}
 
 	wr.WriteHeader(http.StatusOK)
-	err = json.NewEncoder(wr).Encode(&models.RefreshTokenResponse{AccessToken: accessToken, ExpiresIn: expiresIn})
+	err = json.NewEncoder(wr).Encode(&models.RefreshTokenResponse{AccessToken: accessToken, ExpiresIn: time.Now().Add(expiresIn)})
 	if err != nil {
 		return
 	}

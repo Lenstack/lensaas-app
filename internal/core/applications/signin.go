@@ -5,6 +5,7 @@ import (
 	"github.com/Lenstack/lensaas-app/internal/core/models"
 	"github.com/Lenstack/lensaas-app/internal/utils"
 	"net/http"
+	"time"
 )
 
 // SignIn TODO: 1. Get email and password from request, 2. Validate request, 3. Call SignIn method from UserService, 4. Return token
@@ -41,8 +42,18 @@ func (m *Microservice) SignIn(wr http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Set cookie expires in 1 day
+	cookie := http.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
+		Expires:  time.Now().Add(expiresIn),
+		Secure:   false,
+		HttpOnly: true,
+	}
+	http.SetCookie(wr, &cookie)
+
 	wr.WriteHeader(http.StatusOK)
-	err = json.NewEncoder(wr).Encode(&models.SignInResponse{AccessToken: accessToken, RefreshToken: refreshToken, ExpiresIn: expiresIn})
+	err = json.NewEncoder(wr).Encode(&models.SignInResponse{AccessToken: accessToken, RefreshToken: refreshToken, ExpiresIn: time.Now().Add(expiresIn)})
 	if err != nil {
 		return
 	}
