@@ -42,16 +42,6 @@ func (m *Microservice) SignIn(wr http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Set cookie expires in 1 day
-	cookie := http.Cookie{
-		Name:     "access_token",
-		Value:    accessToken,
-		Expires:  time.Now().Add(expiresIn),
-		Secure:   false,
-		HttpOnly: true,
-	}
-	http.SetCookie(wr, &cookie)
-
 	wr.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(wr).Encode(&models.SignInResponse{AccessToken: accessToken, RefreshToken: refreshToken, ExpiresIn: time.Now().Add(expiresIn)})
 	if err != nil {
