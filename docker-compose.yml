@@ -13,10 +13,6 @@ services:
       - redis
     env_file:
       - .env
-    environment:
-      - APP_PORT=5000
-      - DB_HOST=postgres
-      - REDIS_HOST=redis
 
   postgres:
     container_name: postgres

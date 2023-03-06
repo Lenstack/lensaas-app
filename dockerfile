@@ -1,27 +1,29 @@
-## Build
-FROM golang:1.20.1-alpine AS builder
+# Build stage
+FROM golang:1.20.1-alpine3.17 AS build
 
+# Set the working directory
 WORKDIR /app
 
-COPY go.mod go.sum ./
+# Copy the source code
+COPY . .
 
+# Download the dependencies
 RUN go mod download
 
-COPY . ./
+# Build the binary
+RUN CGO_ENABLED=0 GOOS=linux go build -o app ./cmd/main.go
 
-RUN go build -o docker-app ./cmd/main.go
+# Final stage
+FROM alpine:3.17.2
 
-CMD ["./docker-app"]
-
-## Run
-FROM alpine:latest
-
+# Set the working directory
 WORKDIR /app
 
+# Copy the config file
 COPY .env .
 
-COPY --from=builder /app/docker-app .
+# Copy the binary from the build stage
+COPY --from=build /app/app .
 
-CMD ["./docker-app"]
-
-## docker build -t docker-app .
+# Run the binary
+CMD ["./app"]
