@@ -23,6 +23,7 @@ type IUserService interface {
 	VerifyEmail(token string) (message string, err error)
 	VerifyCode(token string, code string) (message string, err error)
 	RefreshToken(refreshToken string) (token string, expiresIn time.Duration, err error)
+	RevokeToken(token string) (message string, err error)
 }
 
 type UserService struct {
@@ -254,4 +255,19 @@ func (us *UserService) RefreshToken(refreshToken string) (token string, expiresI
 	}
 
 	return token, us.TokenService.ExpirationTimeAccess, nil
+}
+
+// RevokeToken TODO: 1. Get refresh token from request, 2. Validate refresh token, 3. Block refresh token, 4. Return success message
+func (us *UserService) RevokeToken(refreshToken string) (message string, err error) {
+	userId, err := us.TokenService.ValidateToken(refreshToken)
+	if err != nil {
+		return "", errors.New("invalid refresh token")
+	}
+
+	message, err = us.UserRepository.BlockRefreshToken(userId, refreshToken)
+	if err != nil {
+		return "", err
+	}
+
+	return message, nil
 }

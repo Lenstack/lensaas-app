@@ -229,6 +229,43 @@ func (ur *UserRepository) DeleteRefreshToken(tokenId string) (message string, er
 }
 
 // BlockRefreshToken TODO: 1. Block refresh token from redis, 2. Return success message
-func (ur *UserRepository) BlockRefreshToken(tokenId string) (message string, err error) {
-	return "", errors.New("not implemented")
+func (ur *UserRepository) BlockRefreshToken(userId, tokenId string) (message string, err error) {
+	userKey := fmt.Sprintf("refresh_token:%s", userId)
+
+	// Get all refresh tokens for the user.
+	keys, err := ur.Redis.SMembers(context.Background(), userKey).Result()
+	if err != nil {
+		return "", err
+	}
+
+	// Check each refresh token for a match with the provided token ID.
+	for _, key := range keys {
+		tokenData, err := ur.Redis.HGetAll(context.Background(), key).Result()
+		if err != nil {
+			return "", err
+		}
+
+		// tokenData["Blocked"] to bool type and check if the token is already blocked. If so, return an error.
+		blocked, err := strconv.ParseBool(tokenData["Blocked"])
+		if err != nil {
+			return "", err
+		}
+
+		if blocked {
+			return "", errors.New("token already blocked")
+		}
+
+		// If the token ID matches, delete the token and return a success message.
+		if tokenData["Token"] == tokenId {
+			// Update the token's "blocked" status to true.
+			err = ur.Redis.HSet(context.Background(), key, "Blocked", true).Err()
+			if err != nil {
+				return "", err
+			}
+			return "refresh token blocked successfully", nil
+		}
+	}
+
+	// If no matching token ID is found, return an error.
+	return "", errors.New("token not found")
 }
