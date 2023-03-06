@@ -49,7 +49,6 @@ func (m *Microservice) SignIn(wr http.ResponseWriter, req *http.Request) {
 		HttpOnly: true,
 		Secure:   false,
 		SameSite: http.SameSiteNoneMode,
-		Path:     "/",
 	}
 
 	cookieAccessToken := http.Cookie{
@@ -59,7 +58,6 @@ func (m *Microservice) SignIn(wr http.ResponseWriter, req *http.Request) {
 		HttpOnly: true,
 		Secure:   false,
 		SameSite: http.SameSiteNoneMode,
-		Path:     "/",
 	}
 
 	http.SetCookie(wr, &cookieRefreshToken)

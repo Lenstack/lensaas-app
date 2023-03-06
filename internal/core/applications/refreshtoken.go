@@ -37,7 +37,6 @@ func (m *Microservice) RefreshToken(wr http.ResponseWriter, req *http.Request) {
 		HttpOnly: true,
 		Secure:   false,
 		SameSite: http.SameSiteNoneMode,
-		Path:     "/",
 	}
 
 	http.SetCookie(wr, &cookieAccessToken)

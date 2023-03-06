@@ -20,6 +20,27 @@ func (m *Microservice) SignOut(wr http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	cookieRefreshToken := http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		Expires:  time.Now(),
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteNoneMode,
+	}
+
+	cookieAccessToken := http.Cookie{
+		Name:     "access_token",
+		Value:    "",
+		Expires:  time.Now(),
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteNoneMode,
+	}
+
+	http.SetCookie(wr, &cookieRefreshToken)
+	http.SetCookie(wr, &cookieAccessToken)
+
 	message, err := m.UserService.RevokeToken(cookieRefresh.Value)
 	if err != nil {
 		wr.WriteHeader(http.StatusBadRequest)
@@ -29,20 +50,6 @@ func (m *Microservice) SignOut(wr http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
-
-	cookieRefreshToken := http.Cookie{
-		Name:    "refresh_token",
-		Value:   "",
-		Expires: time.Now(),
-	}
-	cookieAccessToken := http.Cookie{
-		Name:    "access_token",
-		Value:   "",
-		Expires: time.Now(),
-	}
-
-	http.SetCookie(wr, &cookieRefreshToken)
-	http.SetCookie(wr, &cookieAccessToken)
 
 	wr.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(wr).Encode(&models.SignOutResponse{Message: message})
