@@ -12,29 +12,6 @@ import (
 func (m *Microservice) MiddlewareAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(wr http.ResponseWriter, req *http.Request) {
 		wr.Header().Set("Content-Type", "application/json")
-		/*
-			token := r.Header.Get("Authorization")
-			if token == "" {
-				w.WriteHeader(http.StatusUnauthorized)
-				err := json.NewEncoder(w).Encode(&models.Error{Message: "Unauthorized", Code: http.StatusUnauthorized})
-				if err != nil {
-					return
-				}
-				return
-			}
-
-			parts := strings.Fields(token)
-			if len(parts) != 2 || parts[0] != "Bearer" {
-				w.WriteHeader(http.StatusUnauthorized)
-				err := json.NewEncoder(w).Encode(&models.Error{Message: "Unauthorized", Code: http.StatusUnauthorized})
-				if err != nil {
-					return
-				}
-				return
-			}
-
-			clearedToken := parts[1]
-		*/
 
 		cookieValue, err := req.Cookie("access_token")
 		if err != nil {
