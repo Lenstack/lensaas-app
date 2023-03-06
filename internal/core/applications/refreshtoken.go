@@ -9,7 +9,6 @@ import (
 
 func (m *Microservice) RefreshToken(wr http.ResponseWriter, req *http.Request) {
 	wr.Header().Set("Content-Type", "application/json")
-	//body := &models.RefreshTokenRequest{}
 
 	cookieValue, err := req.Cookie("refresh_token")
 	if err != nil {
@@ -20,27 +19,6 @@ func (m *Microservice) RefreshToken(wr http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
-	/*
-		if err := json.NewDecoder(req.Body).Decode(body); err != nil {
-			wr.WriteHeader(http.StatusBadRequest)
-			err := json.NewEncoder(wr).Encode(&models.Error{Message: err.Error(), Code: http.StatusBadRequest})
-			if err != nil {
-				return
-			}
-			return
-		}
-
-		validateErrors := utils.Validate(body)
-		if len(validateErrors) > 0 {
-			wr.WriteHeader(http.StatusBadRequest)
-			err := json.NewEncoder(wr).Encode(validateErrors)
-			if err != nil {
-				return
-			}
-			return
-		}
-
-	*/
 
 	accessToken, expiresIn, err := m.UserService.RefreshToken(cookieValue.Value)
 	if err != nil {
