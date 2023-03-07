@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/Lenstack/lensaas-app/internal/core/models"
 	"net/http"
+	"strings"
 )
 
 // MiddlewareAuth TODO 1. Add a middleware to the microservice, 2. Add a middleware to the routes
@@ -13,8 +14,8 @@ func (m *Microservice) MiddlewareAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(wr http.ResponseWriter, req *http.Request) {
 		wr.Header().Set("Content-Type", "application/json")
 
-		cookieValue, err := req.Cookie("access_token")
-		if err != nil {
+		token := req.Header.Get("Authorization")
+		if token == "" {
 			wr.WriteHeader(http.StatusUnauthorized)
 			err := json.NewEncoder(wr).Encode(&models.Error{Message: "Unauthorized", Code: http.StatusUnauthorized})
 			if err != nil {
@@ -23,7 +24,19 @@ func (m *Microservice) MiddlewareAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		userId, err := m.TokenService.ValidateToken(cookieValue.Value)
+		parts := strings.Fields(token)
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			wr.WriteHeader(http.StatusUnauthorized)
+			err := json.NewEncoder(wr).Encode(&models.Error{Message: "Unauthorized", Code: http.StatusUnauthorized})
+			if err != nil {
+				return
+			}
+			return
+		}
+
+		clearedToken := parts[1]
+
+		userId, err := m.TokenService.ValidateToken(clearedToken)
 		if err != nil {
 			wr.WriteHeader(http.StatusUnauthorized)
 			err := json.NewEncoder(wr).Encode(&models.Error{Message: "Unauthorized", Code: http.StatusUnauthorized})

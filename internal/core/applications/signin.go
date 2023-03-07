@@ -42,27 +42,6 @@ func (m *Microservice) SignIn(wr http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	cookieRefreshToken := http.Cookie{
-		Name:     "refresh_token",
-		Value:    refreshToken,
-		Expires:  time.Now().Add(m.TokenService.ExpirationTimeRefresh),
-		HttpOnly: true,
-		Secure:   false,
-		SameSite: http.SameSiteNoneMode,
-	}
-
-	cookieAccessToken := http.Cookie{
-		Name:     "access_token",
-		Value:    accessToken,
-		Expires:  time.Now().Add(m.TokenService.ExpirationTimeAccess),
-		HttpOnly: true,
-		Secure:   false,
-		SameSite: http.SameSiteNoneMode,
-	}
-
-	http.SetCookie(wr, &cookieRefreshToken)
-	http.SetCookie(wr, &cookieAccessToken)
-
 	wr.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(wr).Encode(&models.SignInResponse{AccessToken: accessToken, RefreshToken: refreshToken, ExpiresIn: time.Now().Add(expiresIn)})
 	if err != nil {
