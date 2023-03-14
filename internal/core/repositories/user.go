@@ -245,18 +245,17 @@ func (ur *UserRepository) BlockRefreshToken(userId, tokenId string) (message str
 			return "", err
 		}
 
-		// tokenData["Blocked"] to bool type and check if the token is already blocked. If so, return an error.
-		blocked, err := strconv.ParseBool(tokenData["Blocked"])
-		if err != nil {
-			return "", err
-		}
-
-		if blocked {
-			return "", errors.New("token already blocked")
-		}
-
 		// If the token ID matches, delete the token and return a success message.
 		if tokenData["Token"] == tokenId {
+			// Convert string to bool.
+			blocked, err := strconv.ParseBool(tokenData["Blocked"])
+			if err != nil {
+				return "", err
+			}
+			// Check if the token is already blocked.
+			if blocked {
+				return "", errors.New("token already blocked")
+			}
 			// Update the token's "blocked" status to true.
 			err = ur.Redis.HSet(context.Background(), key, "Blocked", true).Err()
 			if err != nil {
