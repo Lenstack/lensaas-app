@@ -26,6 +26,7 @@ func main() {
 		MailPort             = viper.Get("MAIL_PORT").(string)
 		MailEmail            = viper.Get("MAIL_EMAIL").(string)
 		MailPass             = viper.Get("MAIL_PASSWORD").(string)
+		StripeSecretKey      = viper.Get("STRIPE_SECRET_KEY").(string)
 		JwtSecret            = viper.Get("JWT_SECRET").(string)
 		JwtExpirationAccess  = viper.Get("JWT_EXPIRATION_ACCESS").(string)
 		JwtExpirationRefresh = viper.Get("JWT_EXPIRATION_REFRESH").(string)
@@ -34,14 +35,16 @@ func main() {
 	logger := infrastructure.NewLogger(AppEnvironment)
 	postgres := infrastructure.NewPostgres(DBHost, DBPort, DBUser, DBPassword, DBName, logger.Log)
 	redis := infrastructure.NewRedis(RedisHost, RedisPort, RedisPassword, RedisDB, logger.Log)
+	infrastructure.NewStripe(AppEnvironment, StripeSecretKey)
 
 	// Register common services
 	emailService := services.NewEmailService(MailHost, MailPort, MailEmail, MailPass)
 	tokenService := services.NewTokenService(JwtSecret, JwtExpirationAccess, JwtExpirationRefresh)
+	stripeService := services.NewStripeService()
 	// Register all services
 	userService := services.NewUserService(postgres.Database, redis.Client, *tokenService, *emailService)
 	// Register all applications
-	microservice := applications.NewMicroservice(*emailService, *tokenService, *userService)
+	microservice := applications.NewMicroservice(*emailService, *tokenService, *userService, *stripeService)
 
 	routes := infrastructure.NewRoutes(*microservice)
 	infrastructure.NewHttpServer(AppPort, routes.Handlers, logger.Log)
